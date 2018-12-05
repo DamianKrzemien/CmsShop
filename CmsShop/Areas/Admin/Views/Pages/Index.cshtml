@@ -16,8 +16,8 @@
 }
 else
 {
-    <table class="table">
-        <tr>
+    <table class="table sorting" id="pages">
+        <tr class="home">
             <th>
                 Tytuł strony
             </th>
@@ -32,7 +32,7 @@ else
 
         @foreach (var item in Model)
         {
-            <tr>
+            <tr id="id_@item.Id" class="@item.Slug">
                 <td>
                     @Html.DisplayFor(modelItem => item.Title)
                 </td>
@@ -43,12 +43,59 @@ else
                     @Html.DisplayFor(modelItem => item.HasSidebar)
                 </td>
                 <td>
-                    @Html.ActionLink("Edycja", "Edit", new {id = item.Id}) |
+                    @Html.ActionLink("Edycja", "EditPage", new {id = item.Id}) |
                     @Html.ActionLink("Szczegóły", "Details", new {id = item.Id}) |
-                    @Html.ActionLink("Usuń", "Delete", new {id = item.Id})
+                    @if (item.Slug != "home")
+                    {
+                        @Html.ActionLink("Usuń", "Delete", new {id = item.Id}, new{@class = "delete"})
+                    }
                 </td>
             </tr>
         }
 
     </table>
+}
+
+@section Scripts{
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"> </script>
+    
+    <script>
+
+        /*
+         * potwierdzenie usunięcia strony
+         */
+        $(function() {
+
+            $("a.delete").click(function() {
+                if (!confirm("Potwierdzasz usunięcie strony?")) return false;
+            });
+        });
+
+
+        /*
+         * Sortowanie strony drag and drop
+         */
+
+        $(function() {
+
+            $("table#pages tbody").sortable({
+                items: "tr:not(.home)",
+                placeholder: "ui-state-highlight",
+                update: function() {
+                    var ids = $("table#pages tbody").sortable("serialize");
+                    var url = "/Admin/Pages/ReorderPages";
+
+                    $.post(url,
+                        ids,
+                        function(data) {
+
+                        });
+                }
+            });
+        });
+
+    </script>
+
+    
+
 }
