@@ -10,7 +10,7 @@ namespace CmsShop.Models.ViewModels.Pages
             
         }
 
-        public SidebarViewModel(SidebarDto row)
+        public SidebarViewModel(SidebarDTO row)
         {
             Id = row.Id;
             Body = row.Body;

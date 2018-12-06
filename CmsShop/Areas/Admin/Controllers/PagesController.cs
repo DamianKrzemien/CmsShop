@@ -251,7 +251,7 @@ namespace CmsShop.Areas.Admin.Controllers
             using (Db db = new Db())
             {
                 //pobieramy sidebarDto
-                SidebarDto dto = db.Sidebar.Find(1);
+                SidebarDTO dto = db.Sidebar.Find(1);
                 
                 //Inicjalizacja modelu
                 model = new SidebarViewModel(dto);
@@ -267,7 +267,7 @@ namespace CmsShop.Areas.Admin.Controllers
             using (Db db = new Db())
             {
                 //pobieramy Sidebar DTO
-                SidebarDto dto = db.Sidebar.Find(1);
+                SidebarDTO dto = db.Sidebar.Find(1);
 
                 //modyfikacja sidebar
                 dto.Body = model.Body;
