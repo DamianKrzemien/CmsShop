@@ -6,6 +6,7 @@ using System.Linq;
 using System.Web;
 using System.Web.Helpers;
 using System.Web.Mvc;
+using PagedList;
 
 namespace CmsShop.Areas.Admin.Controllers
 {
@@ -287,6 +288,138 @@ namespace CmsShop.Areas.Admin.Controllers
 
            return RedirectToAction("AddProduct");
 
+        }
+
+        //GET: Admin/Shop/Products
+        [HttpGet]
+        public ActionResult Products(int? page, int? catId)
+        {
+            //Deklaracja listy Produktów
+            List<ProductViewModel> listOfProductViewModel;
+
+            //ustawiamy numer strony
+            var pageNumber = page ?? 1;
+
+            using (Db db = new Db())
+            {
+                //inicjalizacja listy produktów
+                listOfProductViewModel = db.Products.ToArray()
+                                           .Where(x => catId == null || catId == 0 || x.CategoryId == catId)
+                                           .Select(x => new ProductViewModel(x))
+                                           .ToList();
+
+                //lista kategorii do dropdownList
+                ViewBag.Categories = new SelectList(db.Categories.ToList(), "Id", "Name");
+
+                //ustawiamy wybraną kategorię
+                ViewBag.SelectedCat = catId.ToString();
+                
+            }
+
+            //ustawienie stronnicowania
+
+            var onePageOfProducts = listOfProductViewModel.ToPagedList(pageNumber, 3);
+            ViewBag.OnePageofProducts = onePageOfProducts;
+            
+            //zwracamy widok z listą produktów
+            return View(listOfProductViewModel);
+
+        }
+
+        //GET: Admin/Shop/EditProduct
+        [HttpGet]
+        public ActionResult EditProduct(int id)
+        {
+            //deklaracja productViewModel
+            ProductViewModel model;
+
+            using (Db db = new Db())
+            {
+                //pobieramy produkt do edycji
+                ProductDTO dto = db.Products.Find(id);
+
+                //sprawdzenie czy produkt istnieje
+                if (dto == null)
+                {
+                    return Content("Ten produkt nie istnieje");
+                }
+
+                //inicjalizacja modelu
+                model = new ProductViewModel(dto);
+
+                //lista kategorii
+                model.Categories = new SelectList(db.Categories.ToList(), "Id", "Name");
+
+                //ustawianie zdjęcia
+                model.GalleryImages = Directory.EnumerateFiles(Server.MapPath("~/Images/Uploads/Products/" + id + "/Galery/Thumbs"))
+                                               .Select(fn => Path.GetFileName(fn));
+            }   
+
+            return View(model);
+
+        }
+
+        //POST: Admin/Shop/EditProduct
+        [HttpPost]
+        public ActionResult EditProduct(ProductViewModel model, HttpPostedFileBase file)
+        {
+            //pobranie id produku
+            int id = model.Id;
+
+            //pobranie kategorii dla dropdownLis
+            using (Db db = new Db())
+            {
+                model.Categories = new SelectList(db.Categories.ToList(), "Id", "Name");
+
+            }
+
+            //ustawianie zdjęcia
+            model.GalleryImages = Directory.EnumerateFiles(Server.MapPath("~/Images/Uploads/Products/" + id + "/Galery/Thumbs"))
+                                           .Select(fn => Path.GetFileName(fn));
+
+            //sprawdzamy model state
+
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            //sprawdzamy czy nazwa jest unikatowa
+            using (Db db = new Db())
+            {
+                if(db.Products.Where(x => x.Id != id).Any(x => x.Name ==model.Name))
+                {
+                    ModelState.AddModelError("", "Ta nazwa produktu jest zajęta");
+                    return View(model);
+                }
+            }
+            
+            //edycja produktu i zapis na bazie
+            using (Db db = new Db())
+            {
+                ProductDTO dto = db.Products.Find(id);
+
+                dto.Name = model.Name;
+                dto.Slug = model.Name.Replace(" ", "-").ToLower();
+                dto.Price = model.Price;
+                dto.CategoryId = model.CategoryId;
+                dto.ImageName = model.ImageName;
+                dto.Description = model.Description;
+
+                CategoryDTO catDto = db.Categories.FirstOrDefault(x => x.Id == model.CategoryId);
+                dto.CategoryName = catDto.Name;
+
+                db.SaveChanges();
+            }
+
+            //ustawienie TempData
+            TempData["SM"] = "Edytowano produkt";
+
+            #region Image Upload
+            
+            #endregion
+
+            return RedirectToAction("EditProduct");
         }
     }
 }
