@@ -1,6 +1,7 @@
 ﻿using CmsShop.Models.Data;
 using CmsShop.Models.ViewModels.Shop;
 using System.Collections.Generic;
+using System.Data.Entity.Infrastructure;
 using System.IO;
 using System.Linq;
 using System.Web;
@@ -417,9 +418,152 @@ namespace CmsShop.Areas.Admin.Controllers
 
             #region Image Upload
             
+            //sprawdzamy czy jest plik
+            if (file != null && file.ContentLength > 0)
+            {
+                //sprawdzamy rozszerzenie pliku czy to jest obrazek
+                string ext = file.ContentType.ToLower();
+
+                if (ext != "image/jpg" &&
+                    ext != "image/jpeg" &&
+                    ext != "image/pjpeg" &&
+                    ext != "image/gif" &&
+                    ext != "image/x-png" &&
+                    ext != "image/png")
+                {
+                    using (Db db = new Db())
+                    {
+                        model.Categories = new SelectList(db.Categories.ToList(), "Id", "Name");
+                        ModelState.AddModelError("", "Obraz nie został przesłany - nieprawidłowe rozszerzenie obrazu.");
+                        return View(model);
+                    }
+                }
+
+                //Utworzenie potrzebnej stutury katalogów
+                var originalDirectory = new DirectoryInfo(string.Format("{0}Images\\Uploads", Server.MapPath(@"\")));
+
+                var pathString1 = Path.Combine(originalDirectory.ToString(), "Products\\" + id.ToString());
+                var pathString2 = Path.Combine(originalDirectory.ToString(), "Products\\" + id.ToString() + "\\Thumbs");
+            
+                //Usuwamy pliki z katalogów
+                DirectoryInfo di1 = new DirectoryInfo(pathString1);
+                DirectoryInfo di2 = new DirectoryInfo(pathString2);
+
+                foreach (var file1 in di1.GetFiles())
+                {
+                    file1.Delete();
+                }
+
+                foreach (var file2 in di2.GetFiles())
+                {
+                    file2.Delete();
+                }
+
+                //zapisujemy nazwę obrazka
+                string imageName = file.FileName;
+
+                using (Db db = new Db())
+                {
+                    ProductDTO dto = db.Products.Find(id);
+                    dto.ImageName = imageName;
+                    db.SaveChanges();
+                }
+
+                //zapis nowych plików
+                var path = string.Format("{0}\\{1}", pathString1, imageName);
+                var path2 = string.Format("{0}\\{1}", pathString2, imageName);
+
+                file.SaveAs(path);
+
+                WebImage img = new WebImage(file.InputStream);
+                img.Resize(200, 200);
+                img.Save(path2);
+
+            }
+
+
             #endregion
 
             return RedirectToAction("EditProduct");
+        }
+        
+        //GET: Admin/Shop/DeketeProduct/id
+        [HttpGet]
+        public ActionResult DeleteProduct(int id)
+        {
+            //usunięcie produktu z bazy
+
+            using (Db db = new Db())
+            {
+                ProductDTO dto = db.Products.Find(id);
+                db.Products.Remove(dto);
+                db.SaveChanges();
+            }
+
+            //usunięcie folderu produktu z wszystkimi plikami
+            var orginalDirectory = new DirectoryInfo(string.Format("{0}Images\\Uploads", Server.MapPath(@"\")));
+            var pathString = Path.Combine(orginalDirectory.ToString(), "Products" + id.ToString());
+
+            if (Directory.Exists(pathString))
+            {
+                Directory.Delete(pathString, true);
+            }
+
+            return RedirectToAction("Products");
+
+        }
+
+        //Post: Admin/Shop/SaveGalleryImages/id
+        [HttpPost]
+        public ActionResult SaveGalleryImages(int id)
+        {
+            //pętla po obrazkach
+            foreach (string fileName in Request.Files)
+            {
+                //Inicjalizacja
+                HttpPostedFileBase file = Request.Files[fileName];
+
+                //sprawdzenie czy jest plik
+                if (file != null && file.ContentLength > 0)
+                {
+                    //ustawiamy ścieżki
+                    var orginalDirectory = new DirectoryInfo(string.Format("{0}Images\\Uploads", Server.MapPath(@"\")));
+
+                    string pathString1 = Path.Combine(orginalDirectory.ToString(), "Products\\" + id.ToString() + "\\Galery");
+                    string pathString2 = Path.Combine(orginalDirectory.ToString(), "Products\\" + id.ToString() + "\\Galery\\Thumbs");
+
+                    var path = string.Format("{0}\\{1}", pathString1, file.FileName);
+                    var path2 = string.Format("{0}\\{1}", pathString2, file.FileName);
+
+                    //zapis obrazków i miniaturek
+                    file.SaveAs(path);
+                    WebImage img = new WebImage(file.InputStream);
+                    img.Resize(200, 200);
+                    img.Save(path2);
+                }
+
+            }
+
+            return View();
+        }
+
+        //Post: Admin/Shop/DeleteImage
+        [HttpPost]
+        public void DeleteImage(int id, string imageName)
+        {
+            string fullPath1 = Request.MapPath("~/Images/Uploads/Products/" + id.ToString() + "/Galery/" + imageName);
+            string fullPath2 = Request.MapPath("~/Images/Uploads/Products/" + id.ToString() + "/Galery/Thumbs/" + imageName);
+
+            if (System.IO.File.Exists(fullPath1))
+            {
+                System.IO.File.Delete(fullPath1);
+            }
+
+            if (System.IO.File.Exists(fullPath2))
+            {
+                System.IO.File.Delete(fullPath2);
+            }
+
         }
     }
 }
