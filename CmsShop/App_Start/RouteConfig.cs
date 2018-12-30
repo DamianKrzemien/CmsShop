@@ -13,11 +13,17 @@ namespace CmsShop
         {
             routes.IgnoreRoute("{resource}.axd/{*pathInfo}");
 
-            routes.MapRoute(
-                name: "Default",
-                url: "{controller}/{action}/{id}",
-                defaults: new { controller = "Home", action = "Index", id = UrlParameter.Optional }
-            );
+            routes.MapRoute("Shop", "Shop/{action}/{name}", new { Controller = "Shop", action = "Index", name =UrlParameter.Optional }, new[] { "CmsShop.Controllers" });
+            routes.MapRoute("SidebarPartial", "Pages/SidebarPartial", new { Controller = "Pages", action = "SidebarPartial" }, new[] { "CmsShop.Controllers" });
+            routes.MapRoute("PagesMenuPartial", "Pages/PagesMenuPartial", new { Controller = "Pages", action = "PagesMenuPartial" }, new[] { "CmsShop.Controllers" });
+            routes.MapRoute("Pages", "{page}", new {Controller = "Pages", action = "Index"}, new[] { "CmsShop.Controllers"});
+            routes.MapRoute("Default", "", new { Controller = "Pages", action = "Index" }, new[] { "CmsShop.Controllers" });
+            
+            //routes.MapRoute(
+            //    name: "Default",
+            //    url: "{controller}/{action}/{id}",
+            //    defaults: new { controller = "Home", action = "Index", id = UrlParameter.Optional }
+            //);
         }
     }
 }
