@@ -12,6 +12,8 @@ namespace CmsShop
         public static void RegisterRoutes(RouteCollection routes)
         {
             routes.IgnoreRoute("{resource}.axd/{*pathInfo}");
+            routes.MapRoute("Cart", "Cart/{action}/{id}", new { Controller = "Cart", action = "Index", id = UrlParameter.Optional }, new[] { "CmsShop.Controllers" });
+
 
             routes.MapRoute("Shop", "Shop/{action}/{name}", new { Controller = "Shop", action = "Index", name =UrlParameter.Optional }, new[] { "CmsShop.Controllers" });
             routes.MapRoute("SidebarPartial", "Pages/SidebarPartial", new { Controller = "Pages", action = "SidebarPartial" }, new[] { "CmsShop.Controllers" });
