@@ -42,28 +42,28 @@ else
 
         @foreach (var item in Model)
         {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.ProductName)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Quantity)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Price)
-            </td>
-            <td>
-                <img src="/Images/Uploads/Products/@item.ProductId/Thumbs/@item.Image"/>
-            </td>
-            <td>
-                <a href="#" class="incproduct" data-id="@item.ProductId">+</a>
-                <a href="#" class="decproduct" data-id="@item.ProductId">-</a>
-                <a href="#" class="removeproduct" data-id="@item.ProductId">Usuń</a>
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Total)
-            </td>
-        </tr>
+            <tr>
+                <td>
+                    @Html.DisplayFor(modelItem => item.ProductName)
+                </td>
+                <td class="qty@(item.ProductId)">
+                    @Html.DisplayFor(modelItem => item.Quantity)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Price)
+                </td>
+                <td>
+                    <img src="/Images/Uploads/Products/@item.ProductId/Thumbs/@item.Image" />
+                </td>
+                <td>
+                    <a href="#" class="incproduct" data-id="@item.ProductId">+</a>
+                    <a href="#" class="decproduct" data-id="@item.ProductId">-</a>
+                    <a href="#" class="removeproduct" data-id="@item.ProductId">Usuń</a>
+                </td>
+                <td class="total@(item.ProductId)">
+                    @Html.DisplayFor(modelItem => item.Total)
+                </td>
+            </tr>
         }
         <tr>
             <td></td>
@@ -72,8 +72,98 @@ else
             <td></td>
             <td></td>
             <td></td>
-            <td>@ViewBag.GrandTotal</td>
+            <td class="grandtotal">
+                <b>Razem: </b>
+                <span> @ViewBag.GrandTotal</span> zł.
+            </td>
         </tr>
 
     </table>
+}
+
+
+@section Scripts{
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+    <script src="~/Scripts/jquery-3.3.1.min.js"></script>
+    <script>
+
+        /*
+         * zwiększenie ilości produktów w koszyku
+         */
+        $(function () {
+
+            $("a.incproduct").click(function (e) {
+                e.preventDefault();
+                var productId = $(this).data("id");
+                var url = "/Cart/IncrementProduct";
+
+                $.getJSON(url,
+                    { productId: productId },
+                    function (data) {
+                        $("td.qty" + productId).html(data.qty);
+                        var price = data.qty * data.price;
+                        var priceHtml = price.toFixed(2) + "zł.";
+
+                        $("td.total" + productId).html(priceHtml);
+
+                        var gt = parseFloat($("td.grandtotal").text());
+                        var grandtotal = (gt + data.price).toFixed(2);
+
+                        $("td.grandtotal span").text(grandtotal);
+                    });
+            });
+
+
+            /**
+             * Zmniejszanie ilości produktu w koszyku
+
+             */
+            $("a.decproduct").click(function (e) {
+                e.preventDefault();
+                var $this = $(this);
+                var productId = $(this).data("id");
+                var url = "/Cart/DecrementProduct";
+
+                $.getJSON(url,
+                    { productId: productId },
+                    function (data) {
+                        if (data.qty == 0) {
+                            $this.parent().parent().fadeOut("fast",
+                                function() {
+                                    location.reload();
+                                });
+                        }
+
+                        $("td.qty" + productId).html(data.qty);
+                        var price = data.qty * data.price;
+                        var priceHtml = price.toFixed(2) + "zł.";
+
+                        $("td.total" + productId).html(priceHtml);
+
+                        var gt = parseFloat($("td.grandtotal").text());
+                        var grandtotal = (gt - data.price).toFixed(2);
+
+                        $("td.grandtotal span").text(grandtotal);
+                    });
+            });
+
+            /*
+             * usuwanie produktu z koszyka
+
+             */
+            $("a.removeproduct").click(function (e) {
+                e.preventDefault();
+                var $this = $(this);
+                var productId = $(this).data("id");
+                var url = "/Cart/RemoveProduct";
+
+                $.get(url,
+                    { productId: productId },
+                    function (data) {
+                        location.reload();
+                    });
+            });
+
+        });
+    </script>
 }

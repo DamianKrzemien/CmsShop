@@ -56,6 +56,9 @@ namespace CmsShop.Controllers
                     qty += item.Quantity;
                     price += item.Total;
                 }
+
+                model.Quantity = qty;
+                model.Price = price;
             }
             else
             {
@@ -118,5 +121,54 @@ namespace CmsShop.Controllers
             return PartialView(model);
         }
 
+        public JsonResult IncrementProduct(int productId)
+        {
+            // Inicjalizacja listy CartViewModel
+            List<CartViewModel> cart = Session["cart"] as List<CartViewModel>;
+
+            //Pobieramy cartViewModel
+            CartViewModel model = cart.FirstOrDefault(x => x.ProductId == productId);
+
+            model.Quantity++;
+
+            //przygotowanie danych do Jsona
+            var result = new {qty = model.Quantity, price = model.Price};
+
+            return Json(result, JsonRequestBehavior.AllowGet);
+        }
+
+        public JsonResult DecrementProduct(int productId)
+        {
+
+            // Inicjalizacja listy CartViewModel
+            List<CartViewModel> cart = Session["cart"] as List<CartViewModel>;
+
+            //Pobieramy cartViewModel
+            CartViewModel model = cart.FirstOrDefault(x => x.ProductId == productId);
+
+            if (model.Quantity > 1)
+            {
+                model.Quantity--;
+            }
+            else
+            {
+                model.Quantity = 0;
+                cart.Remove(model);
+            }
+
+            //przygotowanie danych do Jsona
+            var result = new { qty = model.Quantity, price = model.Price };
+
+            return Json(result, JsonRequestBehavior.AllowGet);
+        }
+
+        public void RemoveProduct(int productId)
+        {
+            List<CartViewModel> cart = Session["cart"] as List<CartViewModel>;
+
+            CartViewModel  model = cart.FirstOrDefault(x => x.ProductId == productId);
+
+            cart.Remove(model);
+        }
     }
 }
