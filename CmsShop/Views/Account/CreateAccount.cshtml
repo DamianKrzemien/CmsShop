@@ -6,6 +6,13 @@
 
 <h2>Utwórz konto</h2>
 
+@if (TempData["SM"] != null)
+{
+    <div class="alert alert-success">
+        @TempData["SM"]
+    </div>
+}
+
 @using (Html.BeginForm())
 {
     @Html.AntiForgeryToken()
@@ -48,7 +55,7 @@
         <div class="form-group">
             <label class="control-label col-md-2">Hasło</label>
             <div class="col-md-10">
-                @Html.PasswordFor(model => model.Password, new { @class = "form-control"  })
+                @Html.PasswordFor(model => model.Password, new { @class = "form-control" })
                 @Html.ValidationMessageFor(model => model.Password, "", new { @class = "text-danger" })
             </div>
         </div>
@@ -56,8 +63,8 @@
         <div class="form-group">
             <label class="control-label col-md-2">Potwierdź hasło</label>
             <div class="col-md-10">
-                @Html.PasswordFor(model => model.Password, new { @class = "form-control"  })
-                @Html.ValidationMessageFor(model => model.Password, "", new { @class = "text-danger" })
+                @Html.PasswordFor(model => model.ConfirmPassword, new { @class = "form-control" })
+                @Html.ValidationMessageFor(model => model.ConfirmPassword, "", new { @class = "text-danger" })
             </div>
         </div>
 
