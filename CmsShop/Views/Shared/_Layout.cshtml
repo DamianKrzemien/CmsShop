@@ -21,17 +21,57 @@
             <div class="navbar-collapse collapse">
                 <ul class="nav navbar-nav">
                     @Html.Action("PagesMenuPartial", "Pages");
+                    @if (Request.IsAuthenticated)
+                    {
+                        <li><a href="/account/logout">Wylogowanie</a></li>
+                    }
+                    else
+                    {
+                        if (ViewBag.Tittle == "Logowanie")
+                        {
+                            <li><a href="/account/login">Logowanie</a></li>
+                        }
+                        else
+                        {
+                            <li class="active"><a href="/account/login">Logowanie</a></li>
+                        }
+                    }
+                    @if (Request.IsAuthenticated && User.IsInRole("User"))
+                    {
+                        if (ViewBag.Title == "Profil Użytkownika")
+                        {
+                            <li class="active">@Html.Action("UserNavPartial", "Account", new { area = "" })</li>
+                        }
+                        else
+                        {
+
+                            <li>@Html.Action("UserNavPartial", "Account", new { area = "" })</li>
+
+                        }
+                    }
                 </ul>
-                <ul class="nav navbar-nav navbar-right">
-                    @Html.Action("CartPartial", "Cart")
-                </ul>
+                @if (Request.IsAuthenticated && User.IsInRole("Admin"))
+                {
+                    <ul class="navbar-collapse collapse navbar-right adminarea">
+                        <li>@Html.ActionLink("Dashbord", "Index", "Dashbord", new {area = "Admin"}, null) </li>
+                    </ul>
+                }
+                else
+                {
+                    if (ViewBag.Title != "Koszyk szczegóły")
+                    {
+                        <ul class="nav navbar-nav navbar-right">
+                            @Html.Action("CartPartial", "Cart")
+                        </ul>
+                    }
+                }
             </div>
         </div>
     </div>
     <div class="container body-content">
 
         <div class="row">
-            
+
             <div class="col-xs-12 col-md-2">
                 @Html.Action("CategoryMenuPartial", "Shop");
             </div>
